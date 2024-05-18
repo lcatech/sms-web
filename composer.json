@@ -1,0 +1,6 @@
+{
+    "require": {
+        "vonage/client": "^4.0",
+        "vlucas/phpdotenv": "^5.6"
+    }
+}
