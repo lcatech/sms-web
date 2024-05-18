@@ -9,9 +9,11 @@ require 'csrf_token.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LCA SMS Sender</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -48,6 +50,7 @@ require 'csrf_token.php';
             margin-top: 10px;
         }
         input[type="text"],
+        input[type="tel"],
         textarea {
             padding: 10px;
             margin-top: 5px;
@@ -79,8 +82,8 @@ require 'csrf_token.php';
             <h1>Send SMS</h1>
             <form id="manual-sms-form">
                 <label for="number">Phone Number:</label>
-                <input type="text" id="number" name="number" required><br><br>
-                <label for="name">Full Name:</label>
+                <input type="tel" id="number" name="number" required><br><br>
+                <label for="name">SMS ID:</label>
                 <input type="text" id="name" name="name" required><br><br>
                 <label for="message">Message:</label>
                 <textarea id="message" name="message" required></textarea><br><br>
@@ -109,8 +112,32 @@ require 'csrf_token.php';
     </div>
 
     <script>
+        const phoneInputField = document.querySelector("#number");
+        const phoneInput = window.intlTelInput(phoneInputField, {
+            initialCountry: "auto",
+            geoIpLookup: function(callback) {
+                fetch('https://ipinfo.io/json', { headers: { 'Accept': 'application/json' }})
+                    .then(response => response.json())
+                    .then(data => {
+                        const countryCode = (data && data.country) ? data.country : "us";
+                        callback(countryCode);
+                    });
+            },
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+        });
+
         document.getElementById('manual-sms-form').addEventListener('submit', function(event) {
             event.preventDefault();
+
+            // Get the full international number
+            const internationalNumber = phoneInput.getNumber();
+
+            // Remove leading zero if present
+            const formattedNumber = internationalNumber.replace(/^(\+?[1-9]\d{1,14})(0)/, '$1');
+
+            // Update the input field value
+            phoneInputField.value = formattedNumber;
+
             var formData = new FormData(this);
 
             fetch('send_manual_sms.php', {
