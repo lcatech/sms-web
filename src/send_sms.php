@@ -1,15 +1,18 @@
 <?php
+
 require '../vendor/autoload.php';
 
 use Vonage\Client\Credentials\Basic;
 use Vonage\Client;
 use Dotenv\Dotenv;
 
+
 // Specify the path to the .env file relative to the current PHP file
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 function sendSms($to, $name, $message) {
+
     // Get API key and secret from environment variables
     $apiKey = $_ENV['VONAGE_API_KEY'];
     $apiSecret = $_ENV['VONAGE_API_SECRET'];
@@ -27,37 +30,17 @@ function sendSms($to, $name, $message) {
     $client = new Client($basic);
 
     try {
-        if (is_array($to)) {
-            // Bulk SMS mode: Send SMS to multiple numbers
-            $responses = [];
-            foreach ($to as $phoneNumber) {
-                $response = $client->sms()->send(
-                    new \Vonage\SMS\Message\SMS($phoneNumber, $name, $message)
-                );
-                $responses[] = $response->current();
-            }
+        // Send SMS
+        $response = $client->sms()->send(
+            new \Vonage\SMS\Message\SMS($to, $name, $message)
+        );
 
-            // Check response status for each message
-            foreach ($responses as $message) {
-                if ($message->getStatus() != 0) {
-                    return ['status' => 'error', 'message' => "Message failed with status: " . $message->getStatus()];
-                }
-            }
-
-            return ['status' => 'success', 'message' => 'Messages sent successfully'];
+        // Check response status
+        $message = $response->current();
+        if ($message->getStatus() == 0) {
+            return ['status' => 'success', 'message' => "Message sent to $to"];
         } else {
-            // Single SMS mode: Send SMS to a single number
-            $response = $client->sms()->send(
-                new \Vonage\SMS\Message\SMS($to, $name, $message)
-            );
-
-            // Check response status
-            $message = $response->current();
-            if ($message->getStatus() == 0) {
-                return ['status' => 'success', 'message' => "Message sent to $to"];
-            } else {
-                return ['status' => 'error', 'message' => "Message failed with status: " . $message->getStatus()];
-            }
+            return ['status' => 'error', 'message' => "Message failed with status: " . $message->getStatus()];
         }
     } catch (\Exception $e) {
         // Handle exceptions
@@ -65,4 +48,3 @@ function sendSms($to, $name, $message) {
     }
 }
 ?>
-
