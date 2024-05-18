@@ -1,3 +1,7 @@
+<?php
+// main.php
+require 'csrf_token.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,19 +24,21 @@
         }
         .container {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+            align-items: center;
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 80%;
+            width: 50%;
         }
         .form-container {
-            width: 45%;
+            width: 100%;
         }
         h1 {
             font-size: 1.5em;
             margin-bottom: 10px;
+            text-align: center;
         }
         form {
             display: flex;
@@ -47,6 +53,7 @@
             margin-top: 5px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            width: 100%;
         }
         textarea {
             resize: vertical;
@@ -77,18 +84,7 @@
                 <input type="text" id="name" name="name" required><br><br>
                 <label for="message">Message:</label>
                 <textarea id="message" name="message" required></textarea><br><br>
-                <input type="submit" value="Send SMS">
-            </form>
-        </div>
-        <div class="form-container">
-            <h1>Send SMS from Google Sheets</h1>
-            <form action="send_sheet_sms.php" method="post">
-                <label for="spreadsheet_id">Spreadsheet ID:</label>
-                <input type="text" id="spreadsheet_id" name="spreadsheet_id" required><br><br>
-                <label for="range">Range (e.g., Sheet1!A1:B10):</label>
-                <input type="text" id="range" name="range" required><br><br>
-                <label for="message">Message:</label>
-                <textarea id="message" name="message" required></textarea><br><br>
+                <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                 <input type="submit" value="Send SMS">
             </form>
         </div>
@@ -134,5 +130,4 @@
         });
     </script>
 </body>
-
 </html>
