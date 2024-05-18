@@ -16,16 +16,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    $number = sanitize_input($_POST['number']);
+    $numbers = explode(',', sanitize_input($_POST['number']));
     $name = sanitize_input($_POST['name']);
     $message = sanitize_input($_POST['message']);
 
-    try {
-        $result = sendSms($number, $name, $message);
-        echo json_encode($result);
-    } catch (Exception $e) {
-        echo json_encode(['status' => 'error', 'message' => "An error occurred: " . $e->getMessage()]);
+    $results = [];
+    foreach ($numbers as $number) {
+        $number = trim($number);
+        if (!empty($number)) {
+            try {
+                $result = sendSms($number, $name, $message);
+                $results[] = $result;
+            } catch (Exception $e) {
+                $results[] = ['status' => 'error', 'message' => "An error occurred: " . $number . " - " . $e->getMessage()];
+            }
+        }
     }
+    echo json_encode($results);
     exit;
 }
 
@@ -36,4 +43,3 @@ function sanitize_input($data) {
     return $data;
 }
 ?>
-

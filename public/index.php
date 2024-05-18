@@ -7,7 +7,7 @@ require 'csrf_token.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LCA SMS Sender</title>
+    <title>LCA SMS Portal</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -50,7 +50,6 @@ require 'csrf_token.php';
             margin-top: 10px;
         }
         input[type="text"],
-        input[type="tel"],
         textarea {
             padding: 10px;
             margin-top: 5px;
@@ -81,8 +80,8 @@ require 'csrf_token.php';
         <div class="form-container">
             <h1>Send SMS</h1>
             <form id="manual-sms-form">
-                <label for="number">Phone Number:</label>
-                <input type="tel" id="number" name="number" required><br><br>
+                <label for="number">Phone Numbers (comma-separated):</label>
+                <textarea id="number" name="number" rows="3" required></textarea><br><br>
                 <label for="name">SMS ID:</label>
                 <input type="text" id="name" name="name" required><br><br>
                 <label for="message">Message:</label>
@@ -112,49 +111,35 @@ require 'csrf_token.php';
     </div>
 
     <script>
-        const phoneInputField = document.querySelector("#number");
-        const phoneInput = window.intlTelInput(phoneInputField, {
-            initialCountry: "auto",
-            geoIpLookup: function(callback) {
-                fetch('https://ipinfo.io/json', { headers: { 'Accept': 'application/json' }})
-                    .then(response => response.json())
-                    .then(data => {
-                        const countryCode = (data && data.country) ? data.country : "us";
-                        callback(countryCode);
-                    });
-            },
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
-        });
+    document.getElementById('manual-sms-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var formData = new FormData(this);
 
-        document.getElementById('manual-sms-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            // Get the full international number
-            const internationalNumber = phoneInput.getNumber();
-
-            // Remove leading zero if present
-            const formattedNumber = internationalNumber.replace(/^(\+?[1-9]\d{1,14})(0)/, '$1');
-
-            // Update the input field value
-            phoneInputField.value = formattedNumber;
-
-            var formData = new FormData(this);
-
-            fetch('send_manual_sms.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('modal-message').innerText = data.message;
-                $('#responseModal').modal('show');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('modal-message').innerText = 'An error occurred: ' + error.message;
-                $('#responseModal').modal('show');
+        fetch('send_manual_sms.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            let message = '';
+            data.forEach(result => {
+                message += result.message + '\n';
             });
+            document.getElementById('modal-message').innerText = message;
+            $('#responseModal').modal('show');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('modal-message').innerText = 'An error occurred: ' + error.message;
+            $('#responseModal').modal('show');
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>
