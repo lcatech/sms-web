@@ -1,9 +1,8 @@
-@echo off
+#!/bin/bash
 
-echo Enter your commit message:
-set /p commit_message=
+read -p "Enter your commit message: " commit_message
 
 git add .
-git commit -m "%commit_message%"
+git commit -m "$commit_message"
 git push origin main
 
